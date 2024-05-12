@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "advertising-control"
 version = "0.1.0"
-description = "Applying control theory to marketing campaings budget"
+description = "Applying control theory to marketing campaigns budget"
 authors = ["Raul Vences <raul.ven.par@gmail.com>"]
 readme = "README.md"
 packages = [{include = "advertising_control"}]
@@ -9,6 +9,7 @@ packages = [{include = "advertising_control"}]
 [tool.poetry.dependencies]
 python = "^3.11"
 matplotlib = "^3.8.4"
+jupyterlab = "^4.2.0"
 
 
 [build-system]
