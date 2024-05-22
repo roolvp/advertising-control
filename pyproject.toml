@@ -10,6 +10,8 @@ packages = [{include = "advertising_control"}]
 python = "^3.11"
 matplotlib = "^3.8.4"
 jupyterlab = "^4.2.0"
+pandas = "^2.2.2"
+numpy = "^1.26.4"
 
 
 [build-system]
