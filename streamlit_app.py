@@ -1,6 +1,6 @@
 import streamlit as st
 
-from advertising_budget_pacing import run_simulation
+from src.advertising_budget_pacing import run_simulation
 
 
 st.title("Real time bidding simulation")
