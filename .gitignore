@@ -1,0 +1,7 @@
+.DS_Store
+.history/
+.vscode/
+=
+=3.19.0
+Pipfile
+__pycache__/
