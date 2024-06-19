@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def run_simulation():
+def run_simulation(budgets: list[int] = [5000, 3000, 2000]):
     data = {
         # Each item is a book that represents a campaign
         'Item': ['Time Series Analysis: Forecasting and Control', 'Practical Statistics for Data Scientists', 'Designing Data-Intensive Applications'],
@@ -13,7 +13,7 @@ def run_simulation():
         'pCTR': [0.03, 0.04, 0.02],
         # Bid amount (this will be randomized around this central amount)
         'Bid': [0.5, 0.48, 0.55],
-        'Budget': [5000,3000,2000],
+        'Budget': budgets,
     }
 
     # Create DataFrame
@@ -74,19 +74,14 @@ def run_simulation():
 
     def decide_budget_proportional_choice(Budget, Spend) -> int:
         """
-        Choose a campaign based on the proportion of budget spent
+        Choose a to enter a bid based on the proportion of budget spent
         """
         p = (Budget - Spend) / Budget
         #ensure p is between 0 and 1
         p = max(0, min(1, p))
         return np.random.choice([0, 1], p=[1-p, p])
 
-    decide_budget_proportional_choice(1000, 500)
 
-
-
-    # %%
-    # Add number of clicks, total spend, CTR, CPC
     def calc_clicks(pCTR, total_impressions = 1000):
         return total_impressions * pCTR
 
@@ -115,13 +110,9 @@ def run_simulation():
         # Choose who enters the bid (% to budget strategy)
         
         selection_df = items_keywords_df.copy()
-        
         # Update selection_df with Spend so far from dataframe simulation_results_df.groupby('Winner')['Spend'].sum()
         selection_df = pd.merge(selection_df, simulation_results_df.groupby('Winner')['Spend'].sum(), left_on='Item', right_on='Winner', how='left')
-        
-        
         selection_df['Enter_bid'] = selection_df.apply(lambda x: decide_budget_proportional_choice(x['Budget'], x['Spend']), axis=1)
-        
         selection_df = selection_df[selection_df['Enter_bid'] == 1]  
         
         # If there are no bidders, skip the minute and save as "No Bid" 
@@ -161,16 +152,10 @@ def run_simulation():
         #print cumulative summ of spend per winner
         print(simulation_results_df.groupby('Winner')['Spend'].sum())
 
-    # %%
-    selection_df
+
 
     # %%
     simulation_results_df.groupby("Winner").agg({"Price Paid": "mean", "pCTR": "mean", "Minute": "count"})
-
-    # %%
-
-
-
     simulation_results_df['Clicks'] = simulation_results_df.apply(lambda x: calc_clicks(total_impressions=1000, pCTR=x['pCTR']), axis=1)
     simulation_results_df['Total Spend'] = simulation_results_df.apply(lambda x: calc_total_spend(x['Clicks'], x['Price Paid']), axis=1)
 
@@ -180,7 +165,7 @@ def run_simulation():
     # add cost per click
     simulation_results_df['Cost Per Click'] = simulation_results_df['Total Spend'] / simulation_results_df['Clicks']
 
-    simulation_results_df.groupby("Winner").agg({"Price Paid": "mean", "pCTR": "mean", "Minute": "count", "Clicks": "sum", "Total Spend": "sum", "Cost Per Click": "mean"})
+    print_df = simulation_results_df.groupby("Winner").agg({"Price Paid": "mean", "pCTR": "mean", "Minute": "count", "Clicks": "sum", "Total Spend": "sum", "Cost Per Click": "mean"})
 
 
 
@@ -202,10 +187,6 @@ def run_simulation():
 
 
 
-
-    # %%
-    from matplotlib import pyplot as plt
-
     fig, axs = plt.subplots(3, figsize=(10, 18))  # Create 3 subplots
 
     items = items_keywords_df['Item'].unique()  # Get unique items
@@ -218,7 +199,7 @@ def run_simulation():
                     label=f"{item} Actual")
         axs[i].legend()  # Add a legend to the subplot
 
-    return fig 
+    return fig, print_df 
 
     # %%
 
