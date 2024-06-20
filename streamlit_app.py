@@ -29,15 +29,15 @@ else:
     pid_params = None
 
 if st.button("🚀  Run simulation"):
-    fig, results_df, pacing_error = run_simulation(budgets=budgets, controller_type=bidding_strategy, pid_params=pid_params)
+    fig, results_df, pacing_error, inventory_fill_rate, average_cost_per_click = run_simulation(budgets=budgets, controller_type=bidding_strategy, pid_params=pid_params)
     # Use st.columns to display metrics in the same row
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric(label="Total Spend", value=f"${100:,.2f}")
+        st.metric(label="Inventory Fill Rate", value=f"{inventory_fill_rate:.2%}")
 
     with col2:
-        st.metric(label="Average Spend", value=f"${100:,.2f}")
+        st.metric(label="Average Cost Per Click", value=f"${average_cost_per_click:,.2f}")
 
     with col3:
         st.metric(label="Global Pacing Error", value=f"{pacing_error:.2%}")

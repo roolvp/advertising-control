@@ -96,11 +96,6 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
     def calc_total_spend(clicks, price_paid):
         return clicks * price_paid
 
-    # %%
-    # Simulate unlimited budget over 1440 minutes
-    # iterate over 1440 minutes (flat traffic)
-    # Save the winner and price paid
-    # Build a dataframe with the results
 
     simulation_results = []
     simulation_results.append({
@@ -112,19 +107,8 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
             })
     simulation_results_df = pd.DataFrame(simulation_results)
     for minute in range(1440):
-        # Remove winner if Spend is greater than Budget
-        #items_keywords_df = items_keywords_df[items_keywords_df['Spend'] < items_keywords_df['Budget']]
-        
-        # Choose who enters the bid (% to budget strategy)
         
         selection_df = items_keywords_df.copy()
-        # Update selection_df with Spend so far from dataframe simulation_results_df.groupby('Winner')['Spend'].sum()
-        selection_df = pd.merge(selection_df, simulation_results_df.groupby('Winner')['Spend'].sum(), left_on='Item', right_on='Winner', how='left')
-        
-        # 
-        
-        # selection_df['Enter_bid'] = selection_df.apply(lambda x: decide_budget_proportional_choice(x['Budget'], x['Spend']), axis=1)
-        # selection_df = selection_df[selection_df['Enter_bid'] == 1]
         
         for campaign in campaigns:
             
@@ -183,7 +167,7 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
 
             
             # print winner and Spend
-            print(f"Minute {minute}: {result['Winner']} wins with a bid of {price_paid}. Spend so far: {selection_df.loc[winner_index, 'Spend']}")
+            #print(f"Minute {minute}: {result['Winner']} wins with a bid of {price_paid}. Spend so far: {selection_df.loc[winner_index, 'Spend']}")
             
             
             simulation_results.append(result)
@@ -203,11 +187,15 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
 
     # add cost per click
     simulation_results_df['Cost Per Click'] = simulation_results_df['Total Spend'] / simulation_results_df['Clicks']
+    average_cost_per_click = simulation_results_df['Cost Per Click'].mean()
 
     print_df = simulation_results_df.groupby("Winner").agg({"Price Paid": "mean", "pCTR": "mean", "Minute": "count", "Clicks": "sum", "Total Spend": "sum", "Cost Per Click": "mean"})
 
-
-
+    # Inventory not sold (Count in simulation_results_df the number of rows with "No Bid" in the "Winner" column)
+    inventory_not_sold = simulation_results_df[simulation_results_df['Winner'] == 'No Bid'].shape[0]
+    inventory_fill_rate = 1 - inventory_not_sold / 1440
+    
+    
 
     timeseries = []
 
@@ -247,7 +235,7 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
                     label=f"{item} Actual")
         axs[i].legend()  # Add a legend to the subplot
 
-    return fig, print_df , pacing_error
+    return fig, print_df, pacing_error, inventory_fill_rate, average_cost_per_click
 
     # %%
 
