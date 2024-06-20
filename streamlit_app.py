@@ -15,7 +15,7 @@ budgets = [budget_1, 2000, 2000]
 # bidding_strategy = st.selectbox("Choose a pacing strategy", ["Performance", "Proportional to budget", "PID controller"])
 
 if st.button("Run simulation"):
-    fig, results_df = run_simulation(budgets=budgets)
+    fig, results_df = run_simulation(budgets=budgets, controller_type="PID")
     st.pyplot(fig)
     st.write(results_df)
     

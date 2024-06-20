@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from src.PID_controller import PIDController
+from src.proportional_controller import ProportionalController
 
 
 class Campaign:
@@ -14,7 +15,7 @@ class Campaign:
         self.controller: PIDController = PIDController(0.01, 0.08, 0.09)
     
 
-def run_simulation(budgets: list[int] = [5000, 1000, 4000]):
+def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str = "Proportional"):
        
     data = {
         # Each item is a book that represents a campaign
@@ -28,8 +29,14 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000]):
     
     # Create Campaign objects in a dictionary
     campaigns = {}
-    for i in range(len(data['Item'])):
-        campaigns[data['Item'][i]] = Campaign(data['Item'][i], data['pCTR'][i], data['Bid'][i], data['Budget'][i])
+    if controller_type == "PID":
+        for i in range(len(data['Item'])):
+            campaigns[data['Item'][i]] = Campaign(data['Item'][i], data['pCTR'][i], data['Bid'][i], data['Budget'][i])
+    elif controller_type == "Proportional":
+        for i in range(len(data['Item'])):
+            campaigns[data['Item'][i]] = Campaign(data['Item'][i], data['pCTR'][i], data['Bid'][i], data['Budget'][i])
+            campaigns[data['Item'][i]].controller = ProportionalController()
+        
         
 
     # Create DataFrame
@@ -113,11 +120,14 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000]):
         # selection_df = selection_df[selection_df['Enter_bid'] == 1]
         
         for campaign in campaigns:
-            # Calculate the bid
-            target_rate = campaigns[campaign].budget * minute / 1440
-            actual_rate = campaigns[campaign].spend 
-            # print campaign, target_rate, actual_rate
-            print(f"{campaign}: target {target_rate}, actual {actual_rate}")
+            
+            if controller_type == "PID":
+                target_rate = campaigns[campaign].budget * minute / 1440
+                actual_rate = campaigns[campaign].spend 
+
+            elif controller_type == "Proportional":
+                target_rate = campaigns[campaign].budget
+                actual_rate = campaigns[campaign].spend
             
             bid = campaigns[campaign].controller.update(target_rate=target_rate, actual_rate=actual_rate, dt=1)
         
