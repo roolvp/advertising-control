@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from src.PID_controller import PIDController
 from src.proportional_controller import ProportionalController
+from src.budget_based_controller import BudgetOnlyController
 
 
 class Campaign:
@@ -12,10 +13,11 @@ class Campaign:
         self.bid = bid
         self.budget = budget
         self.spend = 0
-        self.controller: PIDController = PIDController(0.01, 0.08, 0.09)
+        self.pacing_errors = []
+        self.controller: PIDController = PIDController(0.001, 0.008, 0.9)
     
 
-def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str = "Proportional"):
+def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str = "Performance", pid_params: dict = None):
        
     data = {
         # Each item is a book that represents a campaign
@@ -32,10 +34,15 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
     if controller_type == "PID":
         for i in range(len(data['Item'])):
             campaigns[data['Item'][i]] = Campaign(data['Item'][i], data['pCTR'][i], data['Bid'][i], data['Budget'][i])
+            campaigns[data['Item'][i]].controller = PIDController(pid_params['kp'], pid_params['ki'], pid_params['kd'])
     elif controller_type == "Proportional":
         for i in range(len(data['Item'])):
             campaigns[data['Item'][i]] = Campaign(data['Item'][i], data['pCTR'][i], data['Bid'][i], data['Budget'][i])
             campaigns[data['Item'][i]].controller = ProportionalController()
+    elif controller_type == "Performance":
+        for i in range(len(data['Item'])):
+            campaigns[data['Item'][i]] = Campaign(data['Item'][i], data['pCTR'][i], data['Bid'][i], data['Budget'][i])
+            campaigns[data['Item'][i]].controller = BudgetOnlyController()
         
         
 
@@ -125,13 +132,22 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
                 target_rate = campaigns[campaign].budget * minute / 1440
                 actual_rate = campaigns[campaign].spend 
 
-            elif controller_type == "Proportional":
+            elif controller_type in ["Proportional", "Performance"]:
                 target_rate = campaigns[campaign].budget
                 actual_rate = campaigns[campaign].spend
             
             bid = campaigns[campaign].controller.update(target_rate=target_rate, actual_rate=actual_rate, dt=1)
         
             selection_df.loc[selection_df['Item'] == campaign, 'Enter_bid'] = bid
+            
+            # Pacing error calculations
+            budget_spent = campaigns[campaign].spend
+            budget_target = campaigns[campaign].budget * minute / 1440
+            
+            if budget_target == 0:
+                campaigns[campaign].pacing_errors.append(0)
+            else:
+                campaigns[campaign].pacing_errors.append((budget_spent - budget_target)/budget_target)
         
         selection_df = selection_df[selection_df['Enter_bid'] == 1]
           
@@ -210,6 +226,13 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
     # print the spend for each campaing object
     for campaign in campaigns:
         print(f"{campaign}: {campaigns[campaign].spend}")
+    
+    # Calculate the global pacing error
+    pacing_errors = []
+    for campaign in campaigns:
+        pacing_errors += campaigns[campaign].pacing_errors
+    pacing_error = np.mean(pacing_errors)
+    print(f"Global pacing error: {pacing_error}")
 
 
     fig, axs = plt.subplots(3, figsize=(10, 18))  # Create 3 subplots
@@ -224,7 +247,7 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
                     label=f"{item} Actual")
         axs[i].legend()  # Add a legend to the subplot
 
-    return fig, print_df 
+    return fig, print_df , pacing_error
 
     # %%
 
