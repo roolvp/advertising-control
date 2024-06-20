@@ -4,53 +4,39 @@ import matplotlib.pyplot as plt
 from src.PID_controller import PIDController
 
 
+class Campaign:
+    def __init__(self, name: str, pCTR: float, bid: float, budget: int):
+        self.name = name
+        self.pCTR = pCTR
+        self.bid = bid
+        self.budget = budget
+        self.spend = 0
+        self.controller: PIDController = PIDController(0.01, 0.08, 0.09)
+    
 
-def run_simulation(budgets: list[int] = [5000, 3000, 2000]):
-    
-    campaign_1_controller = PIDController(0.1, 0.01, 0.01)
-    campaign_2_controller = PIDController(0.1, 0.01, 0.01)
-    campaign_3_controller = PIDController(0.1, 0.01, 0.01)
-    
-    
+def run_simulation(budgets: list[int] = [5000, 1000, 4000]):
+       
     data = {
         # Each item is a book that represents a campaign
         'Item': ['Time Series Analysis: Forecasting and Control', 'Practical Statistics for Data Scientists', 'Designing Data-Intensive Applications'],
-        # They are all bidding on the same keyword
-        'Keyword': ['statistics book', 'statistics book', 'statistics book'],
         # Probability of click through rate (This is a guess as we don't have the actual data)
         'pCTR': [0.03, 0.04, 0.02],
         # Bid amount (this will be randomized around this central amount)
         'Bid': [0.5, 0.48, 0.55],
         'Budget': budgets,
     }
+    
+    # Create Campaign objects in a dictionary
+    campaigns = {}
+    for i in range(len(data['Item'])):
+        campaigns[data['Item'][i]] = Campaign(data['Item'][i], data['pCTR'][i], data['Bid'][i], data['Budget'][i])
+        
 
     # Create DataFrame
     items_keywords_df = pd.DataFrame(data)
 
 
-    def auction(df):
-        """
-        Gets df with bidding information and simulates an auction
-        
-        Returns winner and price paid
-        
-        """
-        bid_dict = {}
-        for index, id in df.iterrows():
-            bid_dict[index] = id['Bid']- np.random.uniform(0.0, 0.2)
-        winner = max(bid_dict, key=bid_dict.get)
-        try:
-            # price paid is the bid of the second highest bidder
-            price_paid = sorted(bid_dict.values(), reverse=True)[1]
-        except:
-            # If there is only one bidder, the price paid is the bid of the winner
-            price_paid = bid_dict[winner]
-        return winner, price_paid
 
-    winner, price_paid = auction(items_keywords_df)
-    print(winner)
-    print(f"The winner is {items_keywords_df.loc[winner]['Item']}")
-    print(f"The price paid is {price_paid}")
 
     # %%
     def auction(df):
@@ -120,10 +106,25 @@ def run_simulation(budgets: list[int] = [5000, 3000, 2000]):
         selection_df = items_keywords_df.copy()
         # Update selection_df with Spend so far from dataframe simulation_results_df.groupby('Winner')['Spend'].sum()
         selection_df = pd.merge(selection_df, simulation_results_df.groupby('Winner')['Spend'].sum(), left_on='Item', right_on='Winner', how='left')
-        selection_df['Enter_bid'] = selection_df.apply(lambda x: decide_budget_proportional_choice(x['Budget'], x['Spend']), axis=1)
-        selection_df = selection_df[selection_df['Enter_bid'] == 1] 
         
-         
+        # 
+        
+        # selection_df['Enter_bid'] = selection_df.apply(lambda x: decide_budget_proportional_choice(x['Budget'], x['Spend']), axis=1)
+        # selection_df = selection_df[selection_df['Enter_bid'] == 1]
+        
+        for campaign in campaigns:
+            # Calculate the bid
+            target_rate = campaigns[campaign].budget * minute / 1440
+            actual_rate = campaigns[campaign].spend 
+            # print campaign, target_rate, actual_rate
+            print(f"{campaign}: target {target_rate}, actual {actual_rate}")
+            
+            bid = campaigns[campaign].controller.update(target_rate=target_rate, actual_rate=actual_rate, dt=1)
+        
+            selection_df.loc[selection_df['Item'] == campaign, 'Enter_bid'] = bid
+        
+        selection_df = selection_df[selection_df['Enter_bid'] == 1]
+          
         
         # If there are no bidders, skip the minute and save as "No Bid" 
         
@@ -150,8 +151,10 @@ def run_simulation(budgets: list[int] = [5000, 3000, 2000]):
                 "Spend": price_paid * pctr * 1000
             }
             
-            # Update Spend so far for the winner
-            #items_keywords_df.loc[winner_index, 'Spend'] = items_keywords_df.loc[winner_index, 'Spend'] + result['Spend']
+            # Update Spend so far for the winner update the object
+            campaigns[winner_item].spend += result['Spend']
+            
+
             
             # print winner and Spend
             print(f"Minute {minute}: {result['Winner']} wins with a bid of {price_paid}. Spend so far: {selection_df.loc[winner_index, 'Spend']}")
@@ -194,7 +197,9 @@ def run_simulation(budgets: list[int] = [5000, 3000, 2000]):
         
     campaign_timeseries_df = pd.DataFrame(timeseries)
 
-
+    # print the spend for each campaing object
+    for campaign in campaigns:
+        print(f"{campaign}: {campaigns[campaign].spend}")
 
 
     fig, axs = plt.subplots(3, figsize=(10, 18))  # Create 3 subplots

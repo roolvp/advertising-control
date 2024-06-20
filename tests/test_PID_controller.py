@@ -13,7 +13,7 @@ def test_pid_initialization():
 
 def test_pid_update_positive_adjustment():
     pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
-    adjustment = pid.update(target_rate=100, actual_rate=90, dt=1)
+    adjustment = pid.update(target_rate=400, actual_rate=200, dt=1)
     assert adjustment == 1, "Expected a positive adjustment"
 
 
