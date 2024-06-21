@@ -167,7 +167,16 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
     simulation_results_df['Cost Per Click'] = simulation_results_df['Total Spend'] / simulation_results_df['Clicks']
     average_cost_per_click = simulation_results_df['Cost Per Click'].mean()
 
-    print_df = simulation_results_df.groupby("Winner").agg({"Price Paid": "mean", "pCTR": "mean", "Minute": "count", "Clicks": "sum", "Total Spend": "sum", "Cost Per Click": "mean"})
+    print_df = simulation_results_df.groupby("Winner").agg({"pCTR": "mean", "Minute": "count", "Clicks": "sum", "Total Spend": "sum", "Cost Per Click": "mean"})
+    
+    # Rename columns
+    print_df.index.rename("Campaign", inplace=True)
+    print_df = print_df.rename(columns={"Minute": "Impressions (x1000)", "pCTR": "CTR (avg)"})
+
+    # Round columns to specified decimal places
+    print_df["CTR (avg)"] = print_df["CTR (avg)"].round(4)
+    print_df["Clicks"] = print_df["Clicks"].round(0)
+    print_df["Cost Per Click"] = print_df["Cost Per Click"].round(3)
 
     # Inventory not sold (Count in simulation_results_df the number of rows with "No Bid" in the "Winner" column)
     inventory_not_sold = simulation_results_df[simulation_results_df['Winner'] == 'No Bid'].shape[0]
