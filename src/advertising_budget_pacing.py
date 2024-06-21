@@ -21,7 +21,7 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
        
     data = {
         # Each item is a book that represents a campaign
-        'Item': ['Time Series Analysis: Forecasting and Control', 'Practical Statistics for Data Scientists', 'Designing Data-Intensive Applications'],
+        'Item': ['Campaign 1: Time Series Analysis: Forecasting and Control', 'Campaign 2: Practical Statistics for Data Scientists', 'Campaign 3: Designing Data-Intensive Applications'],
         # Probability of click through rate (This is a guess as we don't have the actual data)
         'pCTR': [0.03, 0.04, 0.02],
         # Bid amount (this will be randomized around this central amount)
@@ -86,7 +86,7 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
     simulation_results = []
     simulation_results.append({
                 'Minute': 0,
-                'Winner': 'Time Series Analysis: Forecasting and Control',
+                'Winner': 'No Bid',
                 'Price Paid': 0,
                 "pCTR": 0,
                 "Spend": 0,
@@ -207,10 +207,11 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
 
     for i in range(3):  # Loop over each subplot
         item = items[i]  # Get the item for this subplot
-        axs[i].plot(campaign_timeseries_df[campaign_timeseries_df['Item'] == item]['Minute'], campaign_timeseries_df[campaign_timeseries_df['Item'] == item]['cumulative_expected_spend_linear'], label=item)
+        axs[i].plot(campaign_timeseries_df[campaign_timeseries_df['Item'] == item]['Minute'], campaign_timeseries_df[campaign_timeseries_df['Item'] == item]['cumulative_expected_spend_linear'], label='Planned Spend ($)')
         axs[i].plot(simulation_results_df[simulation_results_df['Winner'] == item]['Minute'], 
                     simulation_results_df[simulation_results_df['Winner'] == item]['Total Spend'].cumsum(), 
-                    label=f"{item} Actual")
+                    label=f"Actual Spend ($)")
+        axs[i].set_title("Time Series Analysis of " + item)  # Add a title to the subplot
         axs[i].legend()  # Add a legend to the subplot
         axs[i].set_ylabel("Cumulative Spend ($)")
         axs[i].set_xlabel("Time of Day (minutes)")
