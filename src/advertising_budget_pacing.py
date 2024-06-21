@@ -74,20 +74,6 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
         return winner, price_paid
 
     winner, price_paid = auction(items_keywords_df)
-    print(f"The winner is {winner}")
-    print(f"The price paid is {price_paid}")
-
-    # %%
-    test_df = items_keywords_df.copy()
-
-    def decide_budget_proportional_choice(Budget, Spend) -> int:
-        """
-        Choose a to enter a bid based on the proportion of budget spent
-        """
-        p = (Budget - Spend) / Budget
-        #ensure p is between 0 and 1
-        p = max(0, min(1, p))
-        return np.random.choice([0, 1], p=[1-p, p])
 
 
     def calc_clicks(pCTR, total_impressions = 1000):
@@ -131,7 +117,7 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
             if budget_target == 0:
                 campaigns[campaign].pacing_errors.append(0)
             else:
-                campaigns[campaign].pacing_errors.append((budget_spent - budget_target)/budget_target)
+                campaigns[campaign].pacing_errors.append(abs(budget_spent - budget_target)/budget_target)
         
         selection_df = selection_df[selection_df['Enter_bid'] == 1]
           
@@ -165,20 +151,12 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
             campaigns[winner_item].spend += result['Spend']
             
 
-            
-            # print winner and Spend
-            #print(f"Minute {minute}: {result['Winner']} wins with a bid of {price_paid}. Spend so far: {selection_df.loc[winner_index, 'Spend']}")
-            
+                        
             
             simulation_results.append(result)
         simulation_results_df = pd.DataFrame(simulation_results)
-        #print cumulative summ of spend per winner
-        print(simulation_results_df.groupby('Winner')['Spend'].sum())
 
 
-
-    # %%
-    simulation_results_df.groupby("Winner").agg({"Price Paid": "mean", "pCTR": "mean", "Minute": "count"})
     simulation_results_df['Clicks'] = simulation_results_df.apply(lambda x: calc_clicks(total_impressions=1000, pCTR=x['pCTR']), axis=1)
     simulation_results_df['Total Spend'] = simulation_results_df.apply(lambda x: calc_total_spend(x['Clicks'], x['Price Paid']), axis=1)
 
