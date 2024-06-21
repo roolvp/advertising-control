@@ -212,6 +212,8 @@ def run_simulation(budgets: list[int] = [5000, 1000, 4000], controller_type: str
                     simulation_results_df[simulation_results_df['Winner'] == item]['Total Spend'].cumsum(), 
                     label=f"{item} Actual")
         axs[i].legend()  # Add a legend to the subplot
+        axs[i].set_ylabel("Cumulative Spend ($)")
+        axs[i].set_xlabel("Time of Day (minutes)")
 
     return fig, print_df, pacing_error, inventory_fill_rate, average_cost_per_click
 

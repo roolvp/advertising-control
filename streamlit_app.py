@@ -9,11 +9,11 @@ st.subheader("Master the art of smooth campaign delivery! This simulator allows 
 # Add a number input for budget
 col1, col2, col3 = st.columns(3)
 with col1:
-    budget_1 = st.number_input("Set campaign budget 1", min_value=1000, max_value=10000, value=3000, step=500)
+    budget_1 = st.number_input("Campaign 1 budget ($)", min_value=1000, max_value=10000, value=3000, step=500)
 with col2:
-    budget_2 = st.number_input("Set campaign budget 2", min_value=1000, max_value=10000, value=4000, step=500)
+    budget_2 = st.number_input("Campaign 2 budget ($)", min_value=1000, max_value=10000, value=4000, step=500)
 with col3:
-    budget_3 = st.number_input("Set campaign budget 3", min_value=1000, max_value=10000, value=6000, step=500)
+    budget_3 = st.number_input("Campaign 3 budget ($)", min_value=1000, max_value=10000, value=6000, step=500)
 
 budgets = [budget_1, budget_2, budget_3]
 
@@ -23,7 +23,6 @@ bidding_strategy = st.selectbox("Choose a pacing strategy", ["Performance", "Pro
 
 # Display PID parameters if PID is selected
 if bidding_strategy == "PID":
-    st.subheader("PID Parameters")
     col1, col2, col3 = st.columns(3)
     
     with col1:
